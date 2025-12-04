@@ -1,44 +1,60 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
+import { ApiResponse } from "../utils/ApiResponse";
 
 const prisma = new PrismaClient();
 
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const users = await prisma.user.findMany();
-    res.json(users);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving users: ${error.message}` });
-  }
-};
+//get all users
+export const getUsers = asyncHandler(
+  async (req: Request, res: Response) => {
+    req.log.info("Fetching all users");
 
-export const getUser = async (req: Request, res: Response): Promise<void> => {
-  const { cognitoId } = req.params;
-  try {
+    const users = await prisma.user.findMany();
+
+    req.log.info({ count: users.length }, "Users retrieved");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, users, "Users retrieved successfully"));
+  }
+);
+
+//get a single user
+export const getUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { cognitoId } = req.params;
+
+    req.log.info({ cognitoId }, "Fetching user by cognitoId");
+
     const user = await prisma.user.findUnique({
-      where: {
-        cognitoId: cognitoId,
-      },
+      where: { cognitoId },
     });
 
-    res.json(user);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving user: ${error.message}` });
-  }
-};
+    req.log.info(
+      { found: Boolean(user), cognitoId },
+      "User fetch completed"
+    );
 
-export const postUser = async (req: Request, res: Response) => {
-  try {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "User retrieved successfully"));
+  }
+);
+
+ //create a new user
+export const postUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    req.log.info({ body: req.body }, "Creating new user");
+
     const {
       username,
       cognitoId,
       profilePictureUrl = "i1.jpg",
       teamId = 1,
     } = req.body;
+
     const newUser = await prisma.user.create({
       data: {
         username,
@@ -47,10 +63,16 @@ export const postUser = async (req: Request, res: Response) => {
         teamId,
       },
     });
-    res.json({ message: "User Created Successfully", newUser });
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving users: ${error.message}` });
+
+    req.log.info(
+      { userId: newUser.userId, cognitoId },
+      "User created successfully"
+    );
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(201, newUser, "User created successfully")
+      );
   }
-};
+);

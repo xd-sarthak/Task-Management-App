@@ -1,40 +1,56 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
+import { ApiResponse } from "../utils/ApiResponse";
 
 const prisma = new PrismaClient();
 
-export const getProjects = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const projects = await prisma.project.findMany();
-    res.json(projects);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving projects: ${error.message}` });
-  }
-};
+//get all projects
+export const getProjects = asyncHandler(
+  async (req: Request, res: Response) => {
 
-export const createProject = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { name, description, startDate, endDate } = req.body;
-  try {
+    req.log.info("Fetching all projects");
+    const projects = await prisma.project.findMany();
+
+     req.log.info({ count: projects.length }, "Projects fetched");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, projects, "Projects retrieved successfully"));
+  }
+);
+
+//create project
+export const createProject = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { name, description, startDate, endDate } = req.body;
+
+    if (!name) {
+      req.log.warn("Project creation failed — missing name");
+      throw new ApiError(400, "Project name is required");
+    }
+
+    req.log.info({ body: req.body }, "Creating new project");
+
     const newProject = await prisma.project.create({
       data: {
         name,
         description,
-        startDate,
-        endDate,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
       },
     });
-    res.status(201).json(newProject);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error creating a project: ${error.message}` });
+
+    req.log.info(
+      { projectId: newProject.id },
+      "Project created successfully"
+    );
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(201, newProject, "Project created successfully")
+      );
   }
-};
+);
