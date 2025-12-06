@@ -2,6 +2,11 @@
 
 import React, { useState } from "react";
 import ProjectHeader from "@/app/projects/ProjectHeader";
+import Board from "../BoardView";
+import List from "../ListView";
+import Timeline from "../TimelineView";
+import Table from "../TableView";
+import ModalNewTask from "@/app/components/ModalNewTask";
 
 type Props = {
   params: { id: string };

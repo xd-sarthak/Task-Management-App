@@ -1,20 +1,12 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils/prisma.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-
-//get tasks from project
-export const getTasks = asyncHandler(
-  async (req: Request, res: Response) => {
-    const projectId = Number(req.query.projectId);
-
-    if (!projectId || isNaN(projectId)) {
-      throw new ApiError(400, "Valid projectId is required");
-    }
-
+export const getTasks = async (req: Request, res: Response): Promise<void> => {
+  const { projectId } = req.query;
+  try {
     const tasks = await prisma.task.findMany({
-      where: { projectId },
+      where: {
+        projectId: Number(projectId),
+      },
       include: {
         author: true,
         assignee: true,
@@ -22,38 +14,32 @@ export const getTasks = asyncHandler(
         attachments: true,
       },
     });
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, tasks, "Tasks fetched successfully"));
+    res.json(tasks);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving tasks: ${error.message}` });
   }
-);
+};
 
-//createa a task
-export const createTask = asyncHandler(
-  async (req: Request, res: Response) => {
-    const {
-      title,
-      description,
-      status,
-      priority,
-      tags,
-      startDate,
-      dueDate,
-      points,
-      projectId,
-      authorUserId,
-      assignedUserId,
-    } = req.body;
-
-    if (!title) {
-      throw new ApiError(400, "Task title is required");
-    }
-
-    if (!projectId) {
-      throw new ApiError(400, "projectId is required");
-    }
-
+export const createTask = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const {
+    title,
+    description,
+    status,
+    priority,
+    tags,
+    startDate,
+    dueDate,
+    points,
+    projectId,
+    authorUserId,
+    assignedUserId,
+  } = req.body;
+  try {
     const newTask = await prisma.task.create({
       data: {
         title,
@@ -61,60 +47,54 @@ export const createTask = asyncHandler(
         status,
         priority,
         tags,
-        startDate: startDate ? new Date(startDate) : undefined,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
+        startDate,
+        dueDate,
         points,
         projectId,
         authorUserId,
         assignedUserId,
       },
     });
-
-    return res
-      .status(201)
-      .json(new ApiResponse(201, newTask, "Task created successfully"));
+    res.status(201).json(newTask);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error creating a task: ${error.message}` });
   }
-);
+};
 
-//update task status
-export const updateTaskStatus = asyncHandler(
-  async (req: Request, res: Response) => {
-    const taskId = Number(req.params.taskId);
-    const { status } = req.body;
-
-    if (!taskId || isNaN(taskId)) {
-      throw new ApiError(400, "Valid taskId is required");
-    }
-
-    if (!status) {
-      throw new ApiError(400, "Status is required");
-    }
-
+export const updateTaskStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { taskId } = req.params;
+  const { status } = req.body;
+  try {
     const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: { status },
+      where: {
+        id: Number(taskId),
+      },
+      data: {
+        status: status,
+      },
     });
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, updatedTask, "Task status updated"));
+    res.json(updatedTask);
+  } catch (error: any) {
+    res.status(500).json({ message: `Error updating task: ${error.message}` });
   }
-);
+};
 
-//get task for user
-export const getUserTasks = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = Number(req.params.userId);
-
-    if (!userId || isNaN(userId)) {
-      throw new ApiError(400, "Valid userId is required");
-    }
-
+export const getUserTasks = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.params;
+  try {
     const tasks = await prisma.task.findMany({
       where: {
         OR: [
-          { authorUserId: userId },
-          { assignedUserId: userId },
+          { authorUserId: Number(userId) },
+          { assignedUserId: Number(userId) },
         ],
       },
       include: {
@@ -122,9 +102,10 @@ export const getUserTasks = asyncHandler(
         assignee: true,
       },
     });
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, tasks, "User's tasks retrieved successfully"));
+    res.json(tasks);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving user's tasks: ${error.message}` });
   }
-);
+};

@@ -1,45 +1,42 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils/prisma.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
 
-//get all users
-export const getUsers = asyncHandler(
-  async (req: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
     const users = await prisma.user.findMany();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, users, "Users retrieved successfully"));
+    res.json(users);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving users: ${error.message}` });
   }
-);
+};
 
-//get a single user
-export const getUser = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { cognitoId } = req.params;
-
+export const getUser = async (req: Request, res: Response): Promise<void> => {
+  const { cognitoId } = req.params;
+  try {
     const user = await prisma.user.findUnique({
-      where: { cognitoId },
+      where: {
+        cognitoId: cognitoId,
+      },
     });
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, user, "User retrieved successfully"));
+    res.json(user);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving user: ${error.message}` });
   }
-);
+};
 
- //create a new user
-export const postUser = asyncHandler(
-  async (req: Request, res: Response) => {
+export const postUser = async (req: Request, res: Response) => {
+  try {
     const {
       username,
       cognitoId,
       profilePictureUrl = "i1.jpg",
       teamId = 1,
     } = req.body;
-
     const newUser = await prisma.user.create({
       data: {
         username,
@@ -48,11 +45,10 @@ export const postUser = asyncHandler(
         teamId,
       },
     });
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, newUser, "User created successfully")
-      );
+    res.json({ message: "User Created Successfully", newUser });
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving users: ${error.message}` });
   }
-);
+};

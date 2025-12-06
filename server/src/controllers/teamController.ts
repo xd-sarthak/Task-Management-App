@@ -1,11 +1,8 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils/prisma.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
 
-export const getTeams = asyncHandler(
-  async (req: Request, res: Response) => {
+export const getTeams = async (req: Request, res: Response): Promise<void> => {
+  try {
     const teams = await prisma.team.findMany();
 
     const teamsWithUsernames = await Promise.all(
@@ -28,14 +25,10 @@ export const getTeams = asyncHandler(
       })
     );
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          teamsWithUsernames,
-          "Teams retrieved successfully"
-        )
-      );
+    res.json(teamsWithUsernames);
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving teams: ${error.message}` });
   }
-);
+};
