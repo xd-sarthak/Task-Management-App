@@ -1,19 +1,13 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/prisma.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 //get all users
 export const getUsers = asyncHandler(
   async (req: Request, res: Response) => {
-    req.log.info("Fetching all users");
-
     const users = await prisma.user.findMany();
-
-    req.log.info({ count: users.length }, "Users retrieved");
 
     return res
       .status(200)
@@ -26,16 +20,9 @@ export const getUser = asyncHandler(
   async (req: Request, res: Response) => {
     const { cognitoId } = req.params;
 
-    req.log.info({ cognitoId }, "Fetching user by cognitoId");
-
     const user = await prisma.user.findUnique({
       where: { cognitoId },
     });
-
-    req.log.info(
-      { found: Boolean(user), cognitoId },
-      "User fetch completed"
-    );
 
     return res
       .status(200)
@@ -46,8 +33,6 @@ export const getUser = asyncHandler(
  //create a new user
 export const postUser = asyncHandler(
   async (req: Request, res: Response) => {
-    req.log.info({ body: req.body }, "Creating new user");
-
     const {
       username,
       cognitoId,
@@ -63,11 +48,6 @@ export const postUser = asyncHandler(
         teamId,
       },
     });
-
-    req.log.info(
-      { userId: newUser.userId, cognitoId },
-      "User created successfully"
-    );
 
     return res
       .status(201)

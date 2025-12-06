@@ -1,23 +1,16 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/prisma.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const search = asyncHandler(
   async (req: Request, res: Response) => {
     const query = req.query.query as string;
 
-    req.log.info({ query }, "Search request received");
-
     if (!query || query.trim().length === 0) {
-      req.log.warn("Empty search query");
       throw new ApiError(400, "Search query is required");
     }
-
-    req.log.info("Executing search across tasks, projects, and users");
 
     const [tasks, projects, users] = await Promise.all([
       prisma.task.findMany({
@@ -44,15 +37,6 @@ export const search = asyncHandler(
         },
       }),
     ]);
-
-    req.log.info(
-      {
-        taskCount: tasks.length,
-        projectCount: projects.length,
-        userCount: users.length,
-      },
-      "Search completed"
-    );
 
     return res
       .status(200)

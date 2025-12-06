@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import pinoHttp from "pino-http";
-
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const errorHandler = (
 err: any,
@@ -10,19 +8,14 @@ req: Request,
 res: Response,
 next: NextFunction
 ) => {
-const logger = (req as any).log || console;
-
-
 if (err instanceof ApiError) {
-logger.error({ err, requestId: (req as any).id }, "Handled ApiError");
+console.error("Handled ApiError:", { err, requestId: (req as any).id });
 return res
 .status(err.statusCode)
 .json(new ApiResponse(err.statusCode, null, err.message));
 }
 
-
-logger.error({ err, requestId: (req as any).id }, "Unhandled Error");
-
+console.error("Unhandled Error:", { err, requestId: (req as any).id });
 
 return res
 .status(500)

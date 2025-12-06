@@ -1,19 +1,13 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/prisma.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 //get all projects
 export const getProjects = asyncHandler(
   async (req: Request, res: Response) => {
-
-    req.log.info("Fetching all projects");
     const projects = await prisma.project.findMany();
-
-     req.log.info({ count: projects.length }, "Projects fetched");
 
     return res
       .status(200)
@@ -27,11 +21,8 @@ export const createProject = asyncHandler(
     const { name, description, startDate, endDate } = req.body;
 
     if (!name) {
-      req.log.warn("Project creation failed — missing name");
       throw new ApiError(400, "Project name is required");
     }
-
-    req.log.info({ body: req.body }, "Creating new project");
 
     const newProject = await prisma.project.create({
       data: {
@@ -41,11 +32,6 @@ export const createProject = asyncHandler(
         endDate: endDate ? new Date(endDate) : undefined,
       },
     });
-
-    req.log.info(
-      { projectId: newProject.id },
-      "Project created successfully"
-    );
 
     return res
       .status(201)

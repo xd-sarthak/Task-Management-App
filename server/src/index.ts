@@ -4,20 +4,18 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-import pinoHttp from "pino-http";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
-import { logger } from "./utils/logger";
 
 //import all routes
-import projectRoutes from "./routes/projectRoutes";
-import taskRoutes from "./routes/taskRoutes";
-import searchRoutes from "./routes/searchRoutes";
-import userRoutes from "./routes/userRoutes";
-import teamRoutes from "./routes/teamRoutes";
+import projectRoutes from "./routes/projectRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
 
 //middleware
-import { errorHandler } from "./middleware/errorHandler"; // implement ApiError & errorHandler (see notes)
+import { errorHandler } from "./middleware/errorHandler.js"; // implement ApiError & errorHandler (see notes)
 
 dotenv.config();
 
@@ -58,35 +56,6 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   (req as any).id = uuidv4();
   next();
 });
-
-
-
-app.use(
-  pinoHttp({
-    logger,
-    genReqId: () => crypto.randomUUID(),
-    customLogLevel: (res, err) => {
-      if (err || (res.statusCode && res.statusCode >= 500)) return "error";
-      if (res.statusCode && res.statusCode >= 400) return "warn";
-      return "info";
-    },
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url,
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  })
-);
-
 
 /* RATE LIMITING */
 const limiter = rateLimit({
