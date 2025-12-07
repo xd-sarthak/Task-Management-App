@@ -11,6 +11,18 @@ const options = {
 
 const API = axios.create(options);
 
+// Ensure credentials are always included in requests
+API.interceptors.request.use(
+  (config) => {
+    // Force withCredentials to true for all requests
+    config.withCredentials = true;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 API.interceptors.response.use(
   (response) => {
     return response;
