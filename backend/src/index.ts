@@ -27,26 +27,29 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  session({
-    name: "session",
-    keys: [config.SESSION_SECRET],
-    maxAge: 24 * 60 * 60 * 1000,
-    secure: config.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax",
-  })
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
-
+// CORS must be configured BEFORE session middleware
 app.use(
   cors({
     origin: config.FRONTEND_ORIGIN,
     credentials: true,
   })
 );
+
+app.use(
+  session({
+    name: "session",
+    keys: [config.SESSION_SECRET],
+    maxAge: 24 * 60 * 60 * 1000,
+    // CRITICAL: When sameSite is "none", secure MUST be true always
+    // Browsers reject cookies with sameSite: "none" and secure: false
+    secure: true,
+    httpOnly: true,
+    sameSite: "none"
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get(`/`, (req: Request, res: Response) => {
   res.status(HTTPSTATUS.OK).json({
