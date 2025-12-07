@@ -1,131 +1,446 @@
-# Task-Management-App
+# Task Management Application
 
-## Authentication Setup - Google OAuth
+A comprehensive full-stack task management application built with modern web technologies. This application enables teams to manage workspaces, projects, and tasks with role-based access control and Google OAuth authentication.
 
-This application uses Google OAuth for authentication instead of AWS Cognito.
+## 📋 Table of Contents
 
-### Client-Side Environment Variables
+- [Tech Stack](#-tech-stack)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Folder Structure](#-folder-structure)
+- [API Endpoints](#-api-endpoints)
+- [Project Statistics](#-project-statistics)
+- [Environment Variables](#-environment-variables)
+- [Running the Application](#-running-the-application)
 
-Create a `.env.local` file in the `client` directory with the following variables:
+## 🛠 Tech Stack
 
-```env
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+### Backend
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Language:** TypeScript
+- **Database:** MongoDB (Mongoose ODM)
+- **Authentication:** Passport.js (Google OAuth 2.0, Local Strategy)
+- **Session Management:** Cookie Session
+- **Validation:** Zod
+- **Security:** Bcrypt (password hashing), CORS
+- **Development Tools:** ts-node-dev, TypeScript
 
-# NextAuth Configuration (v5)
-AUTH_SECRET=your_nextauth_secret_here
-AUTH_URL=http://localhost:3000
+### Frontend
+- **Framework:** React 18
+- **Language:** TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS
+- **UI Components:** Radix UI
+- **State Management:** Zustand
+- **Data Fetching:** TanStack React Query
+- **Routing:** React Router DOM
+- **Forms:** React Hook Form + Zod
+- **Icons:** Lucide React
+- **Date Handling:** date-fns, react-day-picker
+- **HTTP Client:** Axios
+- **Additional Libraries:**
+  - Emoji Mart (emoji picker)
+  - Immer (immutable state updates)
+  - nuqs (URL state management)
+  - TanStack Table (data tables)
 
-# API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+## ✨ Features
+
+- 🔐 **Authentication:** Google OAuth 2.0 and Local (email/password) authentication
+- 👥 **Workspace Management:** Create, update, and manage workspaces
+- 📁 **Project Management:** Organize projects within workspaces
+- ✅ **Task Management:** Create, update, delete, and track tasks
+- 👤 **Member Management:** Invite members and manage roles
+- 🔒 **Role-Based Access Control:** Permission-based access to features
+- 📊 **Analytics:** Workspace and project analytics
+- 🎨 **Modern UI:** Responsive design with Tailwind CSS and Radix UI components
+
+## 📦 Installation
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- MongoDB database (local or cloud instance like MongoDB Atlas)
+- Google OAuth credentials (for Google authentication)
+
+### Step 1: Clone the Repository
+
+```bash
+git clone <repository-url>
+cd taskapp
 ```
 
-### Server-Side Environment Variables
+### Step 2: Install Backend Dependencies
 
-Create a `.env` file in the `server` directory with the following variables:
+```bash
+cd backend
+npm install
+```
+
+### Step 3: Install Frontend Dependencies
+
+```bash
+cd ../client
+npm install
+```
+
+### Step 4: Set Up Environment Variables
+
+#### Backend Environment Variables
+
+Create a `.env` file in the `backend` directory:
 
 ```env
-# Neon Database Configuration
-# Use the pooled connection string for runtime (from Neon Console)
-DATABASE_URL=postgresql://username:password@ep-xxxxxx-pooler.region.aws.neon.tech/dbname?sslmode=require
-
-# Direct connection string for Prisma migrations (from Neon Console)
-DIRECT_URL=postgresql://username:password@ep-xxxxxx.region.aws.neon.tech/dbname?sslmode=require
-
-# Google OAuth Configuration (for token verification)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-
 # Server Configuration
-PORT=3001
+NODE_ENV=development
+PORT=5000
+BASE_PATH=/api
+
+# Database Configuration
+MONGO_URI=your_mongodb_connection_string
+
+# Session Configuration
+SESSION_SECRET=your_session_secret_here
+SESSION_EXPIRES_IN=24h
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+# Frontend Configuration
+FRONTEND_ORIGIN=http://localhost:5173
+FRONTEND_GOOGLE_CALLBACK_URL=http://localhost:5173/auth/google/callback
 ```
 
-### Setting Up Google OAuth
+#### Frontend Environment Variables
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+Create a `.env.local` file in the `client` directory:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+### Step 5: Set Up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
 3. Enable the Google+ API
 4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
 5. Configure the OAuth consent screen
 6. Add authorized redirect URIs:
-   - `http://localhost:3000/api/auth/callback/google` (for development)
-   - Your production URL + `/api/auth/callback/google` (for production)
+   - `http://localhost:5000/api/auth/google/callback` (for development)
+   - Your production URL + `/api/auth/google/callback` (for production)
 7. Copy the Client ID and Client Secret to your environment variables
 
-### Generating AUTH_SECRET
+### Step 6: Set Up MongoDB
 
-You can generate a secure secret using:
+1. Create a MongoDB database (local or use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas))
+2. Get your connection string
+3. Update `MONGO_URI` in your backend `.env` file
+
+### Step 7: Seed Database (Optional)
+
 ```bash
-openssl rand -base64 32
+cd backend
+npm run seed
 ```
 
-Or use an online generator: https://generate-secret.vercel.app/32
+This will seed the database with initial role data.
 
-### Setting Up Neon Database
+## 📁 Folder Structure
 
-1. **Create a Neon Account:**
-   - Go to [Neon Console](https://console.neon.tech/)
-   - Sign up or log in
-   - Create a new project
-
-2. **Get Connection Strings:**
-   - In your Neon project dashboard, click on "Connection Details"
-   - You'll see two connection strings:
-     - **Pooled Connection** (for `DATABASE_URL`): Use this for runtime connections. It includes `-pooler` in the hostname.
-     - **Direct Connection** (for `DIRECT_URL`): Use this for Prisma migrations. This is the direct connection without pooling.
-
-3. **Update Environment Variables:**
-   - Copy the pooled connection string to `DATABASE_URL` in your `.env` file
-   - Copy the direct connection string to `DIRECT_URL` in your `.env` file
-
-### Database Migration
-
-After setting up the environment variables, run the database migration:
-
-```bash
-cd server
-npx prisma migrate dev
+```
+taskapp/
+├── backend/
+│   ├── src/
+│   │   ├── @types/              # TypeScript type definitions
+│   │   ├── config/              # Configuration files
+│   │   │   ├── app.config.ts    # Application configuration
+│   │   │   ├── database.config.ts # Database connection
+│   │   │   ├── http.config.ts   # HTTP status codes
+│   │   │   └── passport.config.ts # Passport authentication config
+│   │   ├── controllers/         # Route controllers
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── member.controller.ts
+│   │   │   ├── project.controller.ts
+│   │   │   ├── task.controller.ts
+│   │   │   ├── user.controller.ts
+│   │   │   └── workspace.controller.ts
+│   │   ├── enums/               # TypeScript enums
+│   │   │   ├── account-provider.enum.ts
+│   │   │   ├── error-code.enum.ts
+│   │   │   ├── role.enum.ts
+│   │   │   └── task.enum.ts
+│   │   ├── middlewares/         # Express middlewares
+│   │   │   ├── asyncHandler.middleware.ts
+│   │   │   ├── errorHandler.middleware.ts
+│   │   │   └── isAuthenticated.middleware.ts
+│   │   ├── models/              # Mongoose models
+│   │   │   ├── account.model.ts
+│   │   │   ├── member.model.ts
+│   │   │   ├── project.model.ts
+│   │   │   ├── roles-permission.model.ts
+│   │   │   ├── task.model.ts
+│   │   │   ├── user.model.ts
+│   │   │   └── workspace.model.ts
+│   │   ├── routes/              # API routes
+│   │   │   ├── auth.route.ts
+│   │   │   ├── member.route.ts
+│   │   │   ├── project.route.ts
+│   │   │   ├── task.route.ts
+│   │   │   ├── user.route.ts
+│   │   │   └── workspace.route.ts
+│   │   ├── seeders/             # Database seeders
+│   │   │   └── role.seeder.ts
+│   │   ├── services/            # Business logic
+│   │   │   ├── auth.service.ts
+│   │   │   ├── member.service.ts
+│   │   │   ├── project.service.ts
+│   │   │   ├── task.service.ts
+│   │   │   ├── user.service.ts
+│   │   │   └── workspace.service.ts
+│   │   ├── utils/               # Utility functions
+│   │   │   ├── appError.ts
+│   │   │   ├── bcrypt.ts
+│   │   │   ├── get-env.ts
+│   │   │   ├── role-permission.ts
+│   │   │   ├── roleGuard.ts
+│   │   │   └── uuid.ts
+│   │   ├── validation/          # Zod validation schemas
+│   │   │   ├── auth.validation.ts
+│   │   │   ├── project.validation.ts
+│   │   │   ├── task.validation.ts
+│   │   │   └── workspace.validation.ts
+│   │   └── index.ts             # Application entry point
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── client/
+│   ├── src/
+│   │   ├── components/          # React components
+│   │   │   ├── asidebar/        # Sidebar components
+│   │   │   ├── auth/            # Authentication components
+│   │   │   ├── confirm-dialog/  # Confirmation dialogs
+│   │   │   ├── emoji-picker/    # Emoji picker component
+│   │   │   ├── logo/            # Logo component
+│   │   │   ├── resuable/        # Reusable components
+│   │   │   ├── skeleton-loaders/ # Loading skeletons
+│   │   │   ├── ui/              # UI components (Radix UI)
+│   │   │   └── workspace/       # Workspace-related components
+│   │   │       ├── common/      # Common workspace components
+│   │   │       ├── member/      # Member management
+│   │   │       ├── project/     # Project management
+│   │   │       ├── settings/    # Workspace settings
+│   │   │       └── task/        # Task management
+│   │   ├── constant/            # Constants
+│   │   ├── context/             # React contexts
+│   │   │   ├── auth-provider.tsx
+│   │   │   └── query-provider.tsx
+│   │   ├── hoc/                 # Higher-order components
+│   │   │   └── with-permission.tsx
+│   │   ├── hooks/               # Custom React hooks
+│   │   │   ├── api/             # API hooks
+│   │   │   └── ...
+│   │   ├── layout/              # Layout components
+│   │   │   ├── app.layout.tsx
+│   │   │   └── base.layout.tsx
+│   │   ├── lib/                 # Utility libraries
+│   │   │   ├── api.ts
+│   │   │   ├── axios-client.ts
+│   │   │   ├── base-url.ts
+│   │   │   ├── helper.ts
+│   │   │   └── utils.ts
+│   │   ├── page/                # Page components
+│   │   │   ├── auth/            # Authentication pages
+│   │   │   ├── errors/          # Error pages
+│   │   │   ├── invite/          # Invite page
+│   │   │   └── workspace/       # Workspace pages
+│   │   ├── routes/              # Routing configuration
+│   │   │   ├── auth.route.tsx
+│   │   │   ├── common/
+│   │   │   ├── index.tsx
+│   │   │   └── protected.route.tsx
+│   │   ├── types/               # TypeScript types
+│   │   │   ├── api.type.ts
+│   │   │   └── custom-error.type.ts
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── public/                  # Static assets
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── tsconfig.json
+│
+└── README.md
 ```
 
-This will apply the migration that changes `cognitoId` to `googleId` in the User table.
+## 🔌 API Endpoints
 
-**Note:** Prisma Migrate uses the `DIRECT_URL` for migrations, while your application uses the pooled `DATABASE_URL` for runtime connections. This ensures optimal performance.
+All API endpoints are prefixed with `/api` (configurable via `BASE_PATH`).
 
-**Neon Serverless Considerations:**
-- Neon is serverless, which means the database may scale to zero when inactive
-- The first connection after inactivity may have a slight delay (cold start)
-- Connection pooling helps mitigate this by maintaining active connections
-- If you experience connection timeouts, you can add timeout parameters to your connection string:
-  ```
-  ?sslmode=require&connect_timeout=15&pool_timeout=15
-  ```
+### Authentication Routes (`/api/auth`)
 
-### Installation
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Register a new user | No |
+| POST | `/api/auth/login` | Login with email/password | No |
+| POST | `/api/auth/logout` | Logout current user | Yes |
+| GET | `/api/auth/google` | Initiate Google OAuth login | No |
+| GET | `/api/auth/google/callback` | Google OAuth callback | No |
 
-1. Install client dependencies:
+### User Routes (`/api/user`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/user/current` | Get current authenticated user | Yes |
+
+### Workspace Routes (`/api/workspace`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/workspace/create/new` | Create a new workspace | Yes |
+| PUT | `/api/workspace/update/:id` | Update workspace by ID | Yes |
+| DELETE | `/api/workspace/delete/:id` | Delete workspace by ID | Yes |
+| GET | `/api/workspace/all` | Get all workspaces user is a member of | Yes |
+| GET | `/api/workspace/:id` | Get workspace by ID | Yes |
+| GET | `/api/workspace/members/:id` | Get all members of a workspace | Yes |
+| GET | `/api/workspace/analytics/:id` | Get workspace analytics | Yes |
+| PUT | `/api/workspace/change/member/role/:id` | Change member role in workspace | Yes |
+
+### Project Routes (`/api/project`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/project/workspace/:workspaceId/create` | Create a new project in workspace | Yes |
+| PUT | `/api/project/:id/workspace/:workspaceId/update` | Update project by ID | Yes |
+| DELETE | `/api/project/:id/workspace/:workspaceId/delete` | Delete project by ID | Yes |
+| GET | `/api/project/workspace/:workspaceId/all` | Get all projects in workspace | Yes |
+| GET | `/api/project/:id/workspace/:workspaceId` | Get project by ID and workspace ID | Yes |
+| GET | `/api/project/:id/workspace/:workspaceId/analytics` | Get project analytics | Yes |
+
+### Task Routes (`/api/task`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/task/project/:projectId/workspace/:workspaceId/create` | Create a new task | Yes |
+| PUT | `/api/task/:id/project/:projectId/workspace/:workspaceId/update` | Update task by ID | Yes |
+| DELETE | `/api/task/:id/workspace/:workspaceId/delete` | Delete task by ID | Yes |
+| GET | `/api/task/workspace/:workspaceId/all` | Get all tasks in workspace | Yes |
+| GET | `/api/task/:id/project/:projectId/workspace/:workspaceId` | Get task by ID | Yes |
+
+### Member Routes (`/api/member`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/member/workspace/:inviteCode/join` | Join workspace using invite code | Yes |
+
+## 📊 Project Statistics
+
+- **Total Lines of Code:** ~12,668 lines
+- **Backend TypeScript Files:** 49 files
+- **Frontend TypeScript/TSX Files:** 116 files
+- **Total Source Files:** 165+ files
+
+### Breakdown by Component
+
+- **Backend:**
+  - Controllers: 6 files
+  - Services: 6 files
+  - Models: 7 files
+  - Routes: 6 files
+  - Middlewares: 3 files
+  - Utils: 6 files
+  - Validation: 4 files
+  - Config: 4 files
+
+- **Frontend:**
+  - Components: 50+ files
+  - Pages: 10+ files
+  - Hooks: 15+ files
+  - Utilities: 5+ files
+
+## 🚀 Running the Application
+
+### Development Mode
+
+1. **Start the Backend Server:**
+
 ```bash
-cd client
-npm install
-```
-
-2. Install server dependencies:
-```bash
-cd server
-npm install
-```
-
-### Running the Application
-
-1. Start the server:
-```bash
-cd server
+cd backend
 npm run dev
 ```
 
-2. Start the client (in a new terminal):
+The backend server will start on `http://localhost:5000` (or the port specified in your `.env` file).
+
+2. **Start the Frontend Development Server:**
+
 ```bash
 cd client
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+The frontend will start on `http://localhost:5173` (default Vite port).
+
+### Production Build
+
+1. **Build the Backend:**
+
+```bash
+cd backend
+npm run build
+npm start
+```
+
+2. **Build the Frontend:**
+
+```bash
+cd client
+npm run build
+npm run preview
+```
+
+## 🔐 Environment Variables
+
+### Backend Required Variables
+
+- `MONGO_URI` - MongoDB connection string
+- `SESSION_SECRET` - Secret key for session encryption
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `GOOGLE_CALLBACK_URL` - Google OAuth callback URL
+- `FRONTEND_ORIGIN` - Frontend application origin
+- `FRONTEND_GOOGLE_CALLBACK_URL` - Frontend Google OAuth callback URL
+
+### Frontend Required Variables
+
+- `VITE_API_BASE_URL` - Backend API base URL
+- `VITE_GOOGLE_CLIENT_ID` - Google OAuth client ID (for frontend)
+
+## 📝 Notes
+
+- All protected routes require authentication via session cookies
+- The application uses cookie-based sessions for authentication
+- Google OAuth requires proper callback URL configuration
+- MongoDB connection string should include authentication credentials
+- Session secret should be a strong, randomly generated string
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+---
+
+**Built with ❤️ using modern web technologies**
